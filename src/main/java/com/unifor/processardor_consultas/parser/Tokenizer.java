@@ -36,9 +36,12 @@ public class Tokenizer {
                 tokens.add(new Token(Token.Type.RPAREN, ")"));
                 i++;
             } else if (c == '*') {
-                tokens.add(new Token(Token.Type.STAR, "*"));
-                i++;
+                throw new SqlParseException("Uso de '*' não é permitido. Especifique as colunas explicitamente (ex: SELECT Pedido.idpedido).");
             } else if (c == '=' || c == '>' || c == '<') {
+                // Exige espaço antes do operador
+                if (i == 0 || s.charAt(i - 1) != ' ') {
+                    throw new SqlParseException("Operador '" + c + "' deve ser precedido por um espaço (ex: coluna > valor).");
+                }
                 StringBuilder op = new StringBuilder();
                 op.append(c);
                 i++;
@@ -49,6 +52,10 @@ public class Tokenizer {
                         op.append(next);
                         i++;
                     }
+                }
+                // Exige espaço depois do operador
+                if (i < n && s.charAt(i) != ' ') {
+                    throw new SqlParseException("Operador '" + op + "' deve ser seguido por um espaço (ex: coluna " + op + " valor).");
                 }
                 tokens.add(new Token(Token.Type.OPERATOR, op.toString()));
             } else if (Character.isLetter(c) || c == '_') {

@@ -34,12 +34,8 @@ public class SqlValidatorService {
         }
 
         // --- Validate SELECT columns ---
-        boolean isStar = query.getSelectColumns().size() == 1
-                && query.getSelectColumns().get(0).equals("*");
-        if (!isStar) {
-            for (String col : query.getSelectColumns()) {
-                validateColRef(col, aliasMap, errors);
-            }
+        for (String col : query.getSelectColumns()) {
+            validateColRef(col, aliasMap, errors);
         }
 
         // --- Validate JOIN ON conditions ---

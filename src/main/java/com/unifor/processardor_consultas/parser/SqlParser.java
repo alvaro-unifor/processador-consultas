@@ -9,13 +9,14 @@ import java.util.List;
  * Parses a flat token list into a ParsedQuery.
  *
  * Supported grammar:
- *   SELECT (col_list | *) FROM table [alias]
- *   (JOIN table [alias] ON condition)*
+ *   SELECT col_list FROM table
+ *   (JOIN table ON condition)*
  *   (WHERE condition (AND condition)*)?
  *
- * condition := col_ref operator (col_ref | literal)
- * col_ref    := [alias.]column
- * operator   := = | > | < | <= | >= | <>
+ * col_list   := col_ref (, col_ref)*
+ * condition  := col_ref operator (col_ref | literal)
+ * col_ref    := Tabela.coluna  (alias não é permitido)
+ * operator   := = | > | < | <= | >= | <>  (espaço obrigatório antes e depois)
  */
 public class SqlParser {
 
@@ -65,23 +66,17 @@ public class SqlParser {
 
     private String[] parseTableRef() {
         String table = expectIdentifier("nome de tabela");
-        String alias = null;
         if (check(Token.Type.AS)) {
-            consume();
-            alias = expectIdentifier("alias");
-        } else if (check(Token.Type.IDENTIFIER)) {
-            alias = consume().getValue();
+            throw new SqlParseException("Uso de alias não é permitido. Use o nome completo da tabela (ex: Pedido.idpedido).");
         }
-        return new String[]{table, alias};
+        if (check(Token.Type.IDENTIFIER)) {
+            throw new SqlParseException("Alias implícito não é permitido. Use o nome completo da tabela (ex: Pedido.idpedido).");
+        }
+        return new String[]{table, null};
     }
 
     private List<String> parseSelectList() {
         List<String> cols = new ArrayList<>();
-        if (check(Token.Type.STAR)) {
-            consume();
-            cols.add("*");
-            return cols;
-        }
         cols.add(expectIdentifier("coluna"));
         while (check(Token.Type.COMMA)) {
             consume();

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processador de Consultas SQL</title>
+    <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1a2535;
+            color: #fff;
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+
+        header h1 { font-size: 1.35rem; font-weight: 700; }
+
+        header .subtitle {
+            font-size: 0.8rem;
+            color: #8fa3bd;
+            margin-top: 3px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 24px;
+        }
+
+        /* ── Input ───────────────────────────────────── */
+        .input-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 24px 28px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+            margin-bottom: 22px;
+        }
+
+        .input-card label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 110px;
+            padding: 12px 14px;
+            border: 1.5px solid #dde2ea;
+            border-radius: 7px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            color: #000;
+            transition: border-color 0.2s;
+            background: #fdfdff;
+        }
+
+        textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+
+        .hint { font-size: 11.5px; color: #94a3b8; margin-top: 6px; }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+
+        button {
+            padding: 10px 26px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.18s, transform 0.1s;
+        }
+
+        button:active { transform: scale(0.97); }
+
+        #btn-processar { background: #3b82f6; color: #fff; }
+        #btn-processar:hover { background: #2563eb; }
+        #btn-processar:disabled { background: #93c5fd; cursor: default; }
+
+        .btn-clear { background: #f1f5f9; color: #64748b; }
+        .btn-clear:hover { background: #e2e8f0; }
+
+        /* ── Erros ───────────────────────────────────── */
+        .error-box {
+            background: #fff5f5;
+            border: 1.5px solid #fca5a5;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 22px;
+        }
+
+        .error-box h3 {
+            color: #dc2626;
+            font-size: 0.92rem;
+            margin-bottom: 8px;
+        }
+
+        .error-box ul { list-style: none; }
+
+        .error-box ul li {
+            color: #b91c1c;
+            font-size: 0.88rem;
+            padding: 3px 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .error-box ul li::before { content: '✕'; color: #ef4444; flex-shrink: 0; }
+
+        /* ── Cards ───────────────────────────────────── */
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 22px 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+            margin-bottom: 22px;
+        }
+
+        .card h2 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        /* ── Álgebra relacional ──────────────────────── */
+        .algebra-expr {
+            font-family: 'Courier New', monospace;
+            font-size: 14.5px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 16px;
+            line-height: 1.7;
+            color: #000;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* ── Grafos ──────────────────────────────────── */
+        .graphs-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+        }
+
+        @media (max-width: 900px) {
+            .graphs-row { grid-template-columns: 1fr; }
+        }
+
+        .graph-container {
+            width: 100%;
+            height: 460px;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            background: #fafbfc;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .legend-dot {
+            width: 13px;
+            height: 13px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>Processador de Consultas SQL</h1>
+        <div class="subtitle">Validação &nbsp;|&nbsp; Álgebra Relacional &nbsp;|&nbsp; Grafo de Operadores &nbsp;|&nbsp; Otimização</div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Entrada -->
+    <div class="input-card">
+        <label for="sql-input">Consulta SQL</label>
+        <textarea id="sql-input"
+            placeholder="SELECT Pedido.idpedido, Cliente.nome FROM Pedido JOIN Cliente ON Pedido.idcliente = Cliente.idcliente WHERE Pedido.valor > 100"></textarea>
+        <div class="hint">Dica: pressione Ctrl + Enter para processar.</div>
+        <div class="btn-row">
+            <button id="btn-processar" onclick="processar()">Processar</button>
+            <button class="btn-clear" onclick="limpar()">Limpar</button>
+        </div>
+    </div>
+
+    <!-- Erros -->
+    <div id="error-box" class="error-box hidden">
+        <h3>⚠ Erros encontrados</h3>
+        <ul id="error-list"></ul>
+    </div>
+
+    <!-- Resultados (inicialmente ocultos) -->
+    <div id="results-box" class="hidden">
+
+        <!-- Álgebra Relacional (largura total) -->
+        <div class="card">
+            <h2>Álgebra Relacional</h2>
+            <div id="algebra-output" class="algebra-expr"></div>
+        </div>
+
+        <!-- Dois grafos lado a lado -->
+        <div class="graphs-row">
+
+            <!-- Grafo Original -->
+            <div class="card">
+                <h2>Grafo Original</h2>
+                <div id="graph-original" class="graph-container"></div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div> Projeção (π)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#059669"></div> Seleção (σ)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div> Junção (⋈)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div> Tabela</div>
+                </div>
+            </div>
+
+            <!-- Grafo Otimizado -->
+            <div class="card">
+                <h2>Grafo Otimizado</h2>
+                <div id="graph-optimized" class="graph-container"></div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div> Projeção (π)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#059669"></div> Seleção (σ)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div> Junção (⋈)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div> Tabela</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let netOriginal  = null;
+    let netOptimized = null;
+
+    const NODE_STYLE = {
+        PROJECTION: {
+            shape: 'box',
+            color: { background: '#7c3aed', border: '#5b21b6', highlight: { background: '#6d28d9', border: '#4c1d95' } },
+            font: { color: '#fff', size: 12 }
+        },
+        SELECTION: {
+            shape: 'box',
+            color: { background: '#059669', border: '#047857', highlight: { background: '#047857', border: '#065f46' } },
+            font: { color: '#fff', size: 12 }
+        },
+        JOIN: {
+            shape: 'box',
+            color: { background: '#d97706', border: '#b45309', highlight: { background: '#b45309', border: '#92400e' } },
+            font: { color: '#fff', size: 12 }
+        },
+        TABLE_SCAN: {
+            shape: 'database',
+            color: { background: '#2563eb', border: '#1d4ed8', highlight: { background: '#1d4ed8', border: '#1e40af' } },
+            font: { color: '#fff', size: 12 }
+        }
+    };
+
+    /**
+     * Quebra labels longas em múltiplas linhas para caber dentro dos nós.
+     * Formato esperado: "X_{ conteudo }" onde conteudo pode ter vírgulas ou ∧.
+     */
+    function formatLabel(label) {
+        const match = label.match(/^([^{]+\{)([^}]+)(\}.*)$/);
+        if (!match) return label;
+
+        const prefix  = match[1].trim();
+        const content = match[2].trim();
+        const suffix  = match[3].trim();
+
+        // Separa por vírgula ou ∧ e coloca cada parte em linha própria
+        const parts = content.split(/,\s*|∧\s*/).map(p => p.trim()).filter(Boolean);
+        if (parts.length <= 1 && content.length <= 30) return label;
+
+        const separator = content.includes('∧') ? ' ∧\n' : ',\n';
+        return prefix + '\n' + parts.join(separator) + '\n' + suffix;
+    }
+
+    async function processar() {
+        const sql = document.getElementById('sql-input').value.trim();
+        if (!sql) return;
+
+        const btn = document.getElementById('btn-processar');
+        btn.disabled = true;
+        btn.textContent = 'Processando…';
+
+        esconder('error-box');
+        esconder('results-box');
+
+        try {
+            const resp = await fetch('/api/consultas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sql })
+            });
+
+            if (!resp.ok) {
+                mostrarErros(['Erro HTTP ' + resp.status + ': ' + resp.statusText]);
+                return;
+            }
+
+            const data = await resp.json();
+
+            if (!data.valid) {
+                mostrarErros(data.errors);
+            } else {
+                mostrarResultados(data);
+            }
+        } catch (e) {
+            mostrarErros(['Não foi possível conectar ao servidor: ' + e.message]);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Processar';
+        }
+    }
+
+    function mostrarErros(errors) {
+        const list = document.getElementById('error-list');
+        list.innerHTML = errors.map(e => `<li>${escapeHtml(e)}</li>`).join('');
+        mostrar('error-box');
+    }
+
+    function mostrarResultados(data) {
+        document.getElementById('algebra-output').textContent = data.relationalAlgebra;
+
+        if (netOriginal)  { netOriginal.destroy();  netOriginal  = null; }
+        if (netOptimized) { netOptimized.destroy(); netOptimized = null; }
+
+        netOriginal  = renderGrafo('graph-original',  data.operatorGraph);
+        netOptimized = renderGrafo('graph-optimized', data.optimizedGraph);
+
+        mostrar('results-box');
+    }
+
+    function renderGrafo(containerId, graph) {
+        const container = document.getElementById(containerId);
+
+        const visNodes = graph.nodes.map(n => ({
+            id: n.id,
+            label: formatLabel(n.label),
+            title: n.label,           // tooltip com o texto completo ao passar o mouse
+            ...NODE_STYLE[n.type],
+            margin: { top: 10, bottom: 10, left: 12, right: 12 },
+            borderWidth: 2,
+            widthConstraint: { maximum: 200 }   // força quebra de linha automática
+        }));
+
+        const visEdges = graph.edges.map(e => ({
+            from: e.from,
+            to: e.to,
+            arrows: { to: { enabled: true, scaleFactor: 0.7 } },
+            color: { color: '#94a3b8', highlight: '#64748b', inherit: false },
+            width: 2,
+            smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.5 }
+        }));
+
+        const options = {
+            layout: {
+                hierarchical: {
+                    enabled: true,
+                    direction: 'DU',
+                    sortMethod: 'directed',
+                    levelSeparation: 160,   // distância vertical entre níveis
+                    nodeSpacing: 220,       // distância horizontal entre nós do mesmo nível
+                    treeSpacing: 260        // distância entre árvores independentes
+                }
+            },
+            physics: { enabled: false },
+            nodes: {
+                font: { face: 'Courier New', size: 12, multi: false }
+            },
+            edges: { width: 2 },
+            interaction: {
+                dragNodes: true,
+                zoomView: true,
+                dragView: true
+            }
+        };
+
+        return new vis.Network(
+            container,
+            { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) },
+            options
+        );
+    }
+
+    function limpar() {
+        document.getElementById('sql-input').value = '';
+        esconder('error-box');
+        esconder('results-box');
+        if (netOriginal)  { netOriginal.destroy();  netOriginal  = null; }
+        if (netOptimized) { netOptimized.destroy(); netOptimized = null; }
+    }
+
+    function mostrar(id)  { document.getElementById(id).classList.remove('hidden'); }
+    function esconder(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    document.getElementById('sql-input').addEventListener('keydown', e => {
+        if (e.ctrlKey && e.key === 'Enter') processar();
+    });
+</script>
+
+</body>
+</html>

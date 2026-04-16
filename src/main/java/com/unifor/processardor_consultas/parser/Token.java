@@ -6,7 +6,7 @@ public class Token {
         // Keywords
         SELECT, FROM, WHERE, JOIN, ON, AND, AS,
         // Structural
-        IDENTIFIER, OPERATOR, COMMA, LPAREN, RPAREN, STAR, LITERAL
+        IDENTIFIER, OPERATOR, COMMA, LPAREN, RPAREN, LITERAL
     }
 
     private final Type type;

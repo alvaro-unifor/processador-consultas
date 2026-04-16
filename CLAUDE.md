@@ -41,4 +41,48 @@ Critérios de Aceitação:
 
 Regras de Negócio:
 
-• Representação	deve	incluir	seleção	(σ),	projeção	(π)	e	junções	(⋈)
+• Representação	deve	incluir	seleção	(σ),	projeção (π) e junções (⋈)
+
+HU3 – Construção do Grafo de Operadores
+
+Como aluno, quero que o sistema construa um grafo de operadores, para visualizar a estratégia de execução da
+consulta.
+
+Critérios de Aceitação:
+
+• O	grafo	deve	ser	gerado	em	memória	e	exibido	na	interface.
+
+• Cada	nó	deve	representar	operadores.
+
+• Arestas	devem	representar	fluxo	de	resultados	intermediários.
+
+• As	folhas	devem	representar	as	tabelas.
+
+• A	raiz	deve	representar	a	última	projeção.
+
+• O	grafo	representa	a	estratégia	de	execução.
+
+Regras de Negócio:
+
+• O	grafo	deve	respeitar	dependências	lógicas	da	consulta.
+
+HU4 – Otimização da Consulta
+
+Como aluno, quero que a álgebra relacional seja otimizada conforme heurísticas, para reduzir o custo de execução.
+
+Critérios de Aceitação:
+
+• Aplicar	heurísticas:
+seleções	que	reduzem	tuplas	primeiro;
+
+projeções	que	reduzem	atributos na	sequência;
+
+seleções	e	junções	mais	restritivas	primeiro;
+
+o evitar	produto	cartesiano.
+
+• Exibir	o	grafo	otimizado.
+
+Regras de Negócio:
+
+• A	árvore	deve	ser	reordenada (ou	construída) para	eficiência,	aplicando	heurísticas.

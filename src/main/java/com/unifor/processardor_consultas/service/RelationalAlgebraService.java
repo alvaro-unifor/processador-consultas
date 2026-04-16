@@ -41,13 +41,7 @@ public class RelationalAlgebraService {
             inner = "σ_{" + predicates + "}(" + fromExpr + ")";
         }
 
-        // 3. Wrap with π if not SELECT *
-        boolean isStar = query.getSelectColumns().size() == 1
-                && query.getSelectColumns().get(0).equals("*");
-        if (isStar) {
-            return inner;
-        }
-
+        // 3. Wrap with π (projeção obrigatória — * não é permitido)
         String projection = String.join(", ", query.getSelectColumns());
         return "π_{" + projection + "}(" + inner + ")";
     }
