@@ -45,7 +45,8 @@ public class QueryOptimizerService {
     // Construção da árvore otimizada
     // -------------------------------------------------------------------------
 
-    private OperatorNode buildOptimizedTree(ParsedQuery query) {
+    /** Exposto para que o plano de execução (HU5) percorra a mesma árvore otimizada. */
+    public OperatorNode buildOptimizedTree(ParsedQuery query) {
         List<String> allTables = collectAllTables(query);
 
         // H1: separar WHERE conditions em single-table e multi-table

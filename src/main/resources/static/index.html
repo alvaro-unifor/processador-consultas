@@ -196,6 +196,65 @@
         }
 
         .hidden { display: none !important; }
+
+        /* ── Plano de Execução (HU5) ─────────────────── */
+        .plan-list {
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .plan-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+        }
+
+        .plan-step:last-child { margin-bottom: 0; }
+
+        .plan-step-num {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: #fff;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .plan-step-body { flex: 1; min-width: 0; }
+
+        .plan-step-op {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .plan-step-op.TABLE_SCAN { background: #2563eb; }
+        .plan-step-op.SELECTION  { background: #059669; }
+        .plan-step-op.JOIN       { background: #d97706; }
+        .plan-step-op.PROJECTION { background: #7c3aed; }
+
+        .plan-step-desc {
+            font-family: 'Courier New', monospace;
+            font-size: 13.5px;
+            color: #1e293b;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -203,7 +262,7 @@
 <header>
     <div>
         <h1>Processador de Consultas SQL</h1>
-        <div class="subtitle">Validação &nbsp;|&nbsp; Álgebra Relacional &nbsp;|&nbsp; Grafo de Operadores &nbsp;|&nbsp; Otimização</div>
+        <div class="subtitle">Validação &nbsp;|&nbsp; Álgebra Relacional &nbsp;|&nbsp; Grafo de Operadores &nbsp;|&nbsp; Otimização &nbsp;|&nbsp; Plano de Execução</div>
     </div>
 </header>
 
@@ -263,6 +322,12 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Plano de Execução (HU5) -->
+        <div class="card">
+            <h2>Plano de Execução</h2>
+            <ol id="plan-output" class="plan-list"></ol>
         </div>
     </div>
 
@@ -368,7 +433,22 @@
         netOriginal  = renderGrafo('graph-original',  data.operatorGraph);
         netOptimized = renderGrafo('graph-optimized', data.optimizedGraph);
 
+        renderPlano(data.executionPlan || []);
+
         mostrar('results-box');
+    }
+
+    function renderPlano(steps) {
+        const list = document.getElementById('plan-output');
+        list.innerHTML = steps.map(s => `
+            <li class="plan-step">
+                <div class="plan-step-num">${s.order}</div>
+                <div class="plan-step-body">
+                    <span class="plan-step-op ${escapeHtml(s.operation)}">${escapeHtml(s.operation)}</span>
+                    <div class="plan-step-desc">${escapeHtml(s.description)}</div>
+                </div>
+            </li>
+        `).join('');
     }
 
     function renderGrafo(containerId, graph) {

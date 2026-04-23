@@ -86,3 +86,18 @@ o evitar	produto	cartesiano.
 Regras de Negócio:
 
 • A	árvore	deve	ser	reordenada (ou	construída) para	eficiência,	aplicando	heurísticas.
+
+HU5 – Plano de Execução
+
+Como aluno, quero visualizar a ordem de execução da consulta, para compreender como o banco executaria passo a
+passo.
+
+Critérios de Aceitação:
+
+• Exibir	ordem	de	execução	(plano de	execução	ordenado).
+
+• Listar	operações	na	ordem	correta.
+
+Regras de Negócio:
+
+• Execução	deve	seguir	ordem	definida	pelo	grafo	otimizado
