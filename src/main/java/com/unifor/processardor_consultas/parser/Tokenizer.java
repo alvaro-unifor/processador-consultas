@@ -15,6 +15,9 @@ public class Tokenizer {
     public List<Token> tokenize(String sql) {
         List<Token> tokens = new ArrayList<>();
         String s = sql.trim().replaceAll("\\s+", " ");
+        while (s.endsWith(";")) {
+            s = s.substring(0, s.length() - 1).trim();
+        }
         int i = 0;
         int n = s.length();
 
