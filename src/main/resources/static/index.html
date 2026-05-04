@@ -157,17 +157,13 @@
         /* ── Grafos ──────────────────────────────────── */
         .graphs-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 22px;
-        }
-
-        @media (max-width: 900px) {
-            .graphs-row { grid-template-columns: 1fr; }
         }
 
         .graph-container {
             width: 100%;
-            height: 460px;
+            height: 650px;
             border: 1px solid #e2e8f0;
             border-radius: 7px;
             background: #fafbfc;
@@ -255,6 +251,170 @@
             color: #1e293b;
             word-break: break-word;
         }
+
+        /* ── Parsing Visualization ───────────────────── */
+        .parsing-section h3 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #475569;
+            margin: 18px 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .parsing-section h3:first-child { margin-top: 0; }
+
+        .parsing-section .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .parsing-arrow {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        /* Tokens */
+        .token-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+        }
+
+        .token-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-family: 'Courier New', monospace;
+            border: 1.5px solid;
+            transition: transform 0.1s;
+        }
+
+        .token-pill:hover { transform: scale(1.05); }
+
+        .token-pill .token-type {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            opacity: 0.8;
+        }
+
+        .token-pill.kw-SELECT, .token-pill.kw-FROM,
+        .token-pill.kw-WHERE, .token-pill.kw-JOIN,
+        .token-pill.kw-ON, .token-pill.kw-AND {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+
+        .token-pill.kw-IDENTIFIER {
+            background: #f0fdf4;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+
+        .token-pill.kw-OPERATOR {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #b45309;
+        }
+
+        .token-pill.kw-LITERAL {
+            background: #fdf2f8;
+            border-color: #ec4899;
+            color: #be185d;
+        }
+
+        .token-pill.kw-COMMA, .token-pill.kw-LPAREN, .token-pill.kw-RPAREN {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #475569;
+        }
+
+        /* Parsed structure */
+        .parsed-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        .parsed-table th {
+            text-align: left;
+            padding: 10px 14px;
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+            width: 140px;
+        }
+
+        .parsed-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            font-family: 'Courier New', monospace;
+            color: #1e293b;
+        }
+
+        .parsed-table tr:last-child td { border-bottom: none; }
+
+        .parsed-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px 3px;
+        }
+
+        .parsed-tag.tag-col { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .parsed-tag.tag-table { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .parsed-tag.tag-cond { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+        .token-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .token-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .token-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            border: 1.5px solid;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -267,12 +427,11 @@
 </header>
 
 <div class="container">
-
     <!-- Entrada -->
     <div class="input-card">
         <label for="sql-input">Consulta SQL</label>
         <textarea id="sql-input"
-            placeholder="SELECT Pedido.idpedido, Cliente.nome FROM Pedido JOIN Cliente ON Pedido.idcliente = Cliente.idcliente WHERE Pedido.valor > 100"></textarea>
+            placeholder="SELECT Cliente.nome, Pedido.idpedido, Pedido.ValorTotalPedido FROM Cliente JOIN Pedido ON Cliente.idcliente = Pedido.Cliente_idCliente WHERE Pedido.ValorTotalPedido > 100"></textarea>
         <div class="hint">Dica: pressione Ctrl + Enter para processar.</div>
         <div class="btn-row">
             <button id="btn-processar" onclick="processar()">Processar</button>
@@ -286,9 +445,35 @@
         <ul id="error-list"></ul>
     </div>
 
+    <!-- Parsing (aparece mesmo com erros de schema) -->
+    <div id="parsing-box" class="hidden">
+        <div class="card parsing-section">
+            <h2>Parsing da Consulta</h2>
+
+            <h3><span class="step-badge">1</span> Tokenização — Quebra da SQL em tokens</h3>
+            <div id="token-flow" class="token-flow"></div>
+            <div class="token-legend">
+                <div class="token-legend-item"><div class="token-legend-dot" style="background:#eff6ff;border-color:#3b82f6"></div> Keyword</div>
+                <div class="token-legend-item"><div class="token-legend-dot" style="background:#f0fdf4;border-color:#22c55e"></div> Identificador</div>
+                <div class="token-legend-item"><div class="token-legend-dot" style="background:#fef3c7;border-color:#f59e0b"></div> Operador</div>
+                <div class="token-legend-item"><div class="token-legend-dot" style="background:#fdf2f8;border-color:#ec4899"></div> Literal</div>
+                <div class="token-legend-item"><div class="token-legend-dot" style="background:#f1f5f9;border-color:#94a3b8"></div> Estrutural</div>
+            </div>
+
+            <div class="parsing-arrow">&#8595;</div>
+
+            <h3><span class="step-badge">2</span> Análise Sintática — Estrutura reconhecida</h3>
+            <table id="parsed-structure" class="parsed-table"></table>
+
+            <div class="parsing-arrow">&#8595;</div>
+
+            <h3><span class="step-badge">3</span> Validação Semântica — Tabelas e colunas verificadas no schema</h3>
+            <div id="validation-status"></div>
+        </div>
+    </div>
+
     <!-- Resultados (inicialmente ocultos) -->
     <div id="results-box" class="hidden">
-
         <!-- Álgebra Relacional (largura total) -->
         <div class="card">
             <h2>Álgebra Relacional</h2>
@@ -330,7 +515,6 @@
             <ol id="plan-output" class="plan-list"></ol>
         </div>
     </div>
-
 </div>
 
 <script>
@@ -341,22 +525,22 @@
         PROJECTION: {
             shape: 'box',
             color: { background: '#7c3aed', border: '#5b21b6', highlight: { background: '#6d28d9', border: '#4c1d95' } },
-            font: { color: '#fff', size: 12 }
+            font: { color: '#fff', size: 15 }
         },
         SELECTION: {
             shape: 'box',
             color: { background: '#059669', border: '#047857', highlight: { background: '#047857', border: '#065f46' } },
-            font: { color: '#fff', size: 12 }
+            font: { color: '#fff', size: 15 }
         },
         JOIN: {
             shape: 'box',
             color: { background: '#d97706', border: '#b45309', highlight: { background: '#b45309', border: '#92400e' } },
-            font: { color: '#fff', size: 12 }
+            font: { color: '#fff', size: 15 }
         },
         TABLE_SCAN: {
             shape: 'database',
             color: { background: '#2563eb', border: '#1d4ed8', highlight: { background: '#1d4ed8', border: '#1e40af' } },
-            font: { color: '#fff', size: 12 }
+            font: { color: '#fff', size: 15 }
         }
     };
 
@@ -390,6 +574,7 @@
 
         esconder('error-box');
         esconder('results-box');
+        esconder('parsing-box');
 
         try {
             const resp = await fetch('/api/consultas', {
@@ -404,6 +589,11 @@
             }
 
             const data = await resp.json();
+
+            // Mostra o parsing se disponível (aparece mesmo com erros de schema)
+            if (data.parsingDetail) {
+                renderParsing(data.parsingDetail, data.valid);
+            }
 
             if (!data.valid) {
                 mostrarErros(data.errors);
@@ -453,42 +643,48 @@
 
     function renderGrafo(containerId, graph) {
         const container = document.getElementById(containerId);
+        const nodeCount = graph.nodes.length;
+
+        // Espaçamento proporcional ao número de nós
+        const spacing = Math.max(250, nodeCount * 40);
+        const levelSep = Math.max(160, nodeCount * 20);
 
         const visNodes = graph.nodes.map(n => ({
             id: n.id,
             label: formatLabel(n.label),
-            title: n.label,           // tooltip com o texto completo ao passar o mouse
+            title: n.label,
             ...NODE_STYLE[n.type],
-            margin: { top: 10, bottom: 10, left: 12, right: 12 },
+            margin: { top: 12, bottom: 12, left: 16, right: 16 },
             borderWidth: 2,
-            widthConstraint: { maximum: 200 }   // força quebra de linha automática
+            widthConstraint: { maximum: 300 }
         }));
 
         const visEdges = graph.edges.map(e => ({
             from: e.from,
             to: e.to,
-            arrows: { to: { enabled: true, scaleFactor: 0.7 } },
+            arrows: { to: { enabled: true, scaleFactor: 0.8 } },
             color: { color: '#94a3b8', highlight: '#64748b', inherit: false },
-            width: 2,
-            smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.5 }
+            width: 2.5,
+            smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4 }
         }));
 
+        // Renderiza com layout hierárquico para posicionar os nós
         const options = {
             layout: {
                 hierarchical: {
                     enabled: true,
                     direction: 'DU',
                     sortMethod: 'directed',
-                    levelSeparation: 160,   // distância vertical entre níveis
-                    nodeSpacing: 220,       // distância horizontal entre nós do mesmo nível
-                    treeSpacing: 260        // distância entre árvores independentes
+                    levelSeparation: levelSep,
+                    nodeSpacing: spacing,
+                    treeSpacing: spacing
                 }
             },
             physics: { enabled: false },
             nodes: {
-                font: { face: 'Courier New', size: 12, multi: false }
+                font: { face: 'Courier New', size: 14, multi: false }
             },
-            edges: { width: 2 },
+            edges: { width: 2.5 },
             interaction: {
                 dragNodes: true,
                 zoomView: true,
@@ -496,16 +692,132 @@
             }
         };
 
-        return new vis.Network(
+        const network = new vis.Network(
             container,
             { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) },
             options
         );
+
+        // Sequência:
+        // 1. Layout hierárquico posiciona os nós
+        // 2. Desabilita hierárquico e ativa physics para separar sobreposições
+        // 3. Physics termina -> desliga physics -> centraliza com fit()
+        let finalized = false;
+        function finalizeLayout() {
+            if (finalized) return;
+            finalized = true;
+
+            // Desabilita hierárquico para permitir arrastar livremente
+            network.setOptions({
+                layout: { hierarchical: { enabled: false } },
+                physics: {
+                    enabled: true,
+                    solver: 'repulsion',
+                    repulsion: {
+                        nodeDistance: spacing,
+                        centralGravity: 0.15,
+                        springLength: levelSep,
+                        springConstant: 0.02,
+                        damping: 0.3
+                    },
+                    stabilization: { iterations: 80 }
+                }
+            });
+
+            // Quando a physics terminar de separar os nós:
+            // desliga physics e centraliza tudo na tela
+            network.once('stabilizationIterationsDone', function () {
+                network.setOptions({ physics: { enabled: false } });
+                setTimeout(function () {
+                    network.fit({
+                        animation: { duration: 300, easingFunction: 'easeInOutQuad' }
+                    });
+                }, 50);
+            });
+
+            // Segurança: se o evento não disparar, força fit após 1.5s
+            setTimeout(function () {
+                network.setOptions({ physics: { enabled: false } });
+                network.fit({
+                    animation: { duration: 300, easingFunction: 'easeInOutQuad' }
+                });
+            }, 1500);
+        }
+
+        network.once('afterDrawing', function () {
+            setTimeout(finalizeLayout, 100);
+        });
+
+        return network;
+    }
+
+    // Nomes amigáveis para os tipos de token exibidos na interface
+    const TOKEN_LABELS = {
+        SELECT: 'KEYWORD', FROM: 'KEYWORD', WHERE: 'KEYWORD',
+        JOIN: 'KEYWORD', ON: 'KEYWORD', AND: 'KEYWORD',
+        IDENTIFIER: 'IDENTIFICADOR', OPERATOR: 'OPERADOR',
+        COMMA: 'VIRGULA', LPAREN: 'PARENTESE', RPAREN: 'PARENTESE',
+        LITERAL: 'LITERAL'
+    };
+
+    function renderParsing(detail, isValid) {
+        // --- Etapa 1: Tokens ---
+        const flow = document.getElementById('token-flow');
+        flow.innerHTML = detail.tokens.map(t => {
+            const label = TOKEN_LABELS[t.type] || t.type;
+            return `<span class="token-pill kw-${escapeHtml(t.type)}" title="${escapeHtml(t.type)}">` +
+                `<span class="token-type">${escapeHtml(label)}</span> ${escapeHtml(t.value)}</span>`;
+        }).join('');
+
+        // --- Etapa 2: Estrutura parseada ---
+        const table = document.getElementById('parsed-structure');
+        const s = detail.parsedStructure;
+
+        const selectTags = s.selectColumns
+            .map(c => `<span class="parsed-tag tag-col">${escapeHtml(c)}</span>`).join(' ');
+
+        const fromTag = `<span class="parsed-tag tag-table">${escapeHtml(s.fromTable)}</span>`;
+
+        let joinRows = '';
+        if (s.joins.length > 0) {
+            const joinContent = s.joins.map(j =>
+                `<span class="parsed-tag tag-table">${escapeHtml(j.table)}</span> ` +
+                `ON <span class="parsed-tag tag-cond">${escapeHtml(j.condition)}</span>`
+            ).join('<br>');
+            joinRows = `<tr><th>JOIN</th><td>${joinContent}</td></tr>`;
+        }
+
+        let whereRow = '';
+        if (s.whereConditions.length > 0) {
+            const whereContent = s.whereConditions
+                .map(c => `<span class="parsed-tag tag-cond">${escapeHtml(c)}</span>`).join(' AND ');
+            whereRow = `<tr><th>WHERE</th><td>${whereContent}</td></tr>`;
+        }
+
+        table.innerHTML =
+            `<tr><th>SELECT</th><td>${selectTags}</td></tr>` +
+            `<tr><th>FROM</th><td>${fromTag}</td></tr>` +
+            joinRows + whereRow;
+
+        // --- Etapa 3: Status da validação ---
+        const status = document.getElementById('validation-status');
+        if (isValid) {
+            status.innerHTML =
+                `<div style="padding:10px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:7px;color:#15803d;font-weight:600;font-size:13.5px">` +
+                `Todas as tabelas e colunas existem no schema.</div>`;
+        } else {
+            status.innerHTML =
+                `<div style="padding:10px 14px;background:#fff5f5;border:1.5px solid #fca5a5;border-radius:7px;color:#b91c1c;font-weight:600;font-size:13.5px">` +
+                `Erros encontrados na validacao do schema (veja acima).</div>`;
+        }
+
+        mostrar('parsing-box');
     }
 
     function limpar() {
         document.getElementById('sql-input').value = '';
         esconder('error-box');
+        esconder('parsing-box');
         esconder('results-box');
         if (netOriginal)  { netOriginal.destroy();  netOriginal  = null; }
         if (netOptimized) { netOptimized.destroy(); netOptimized = null; }

@@ -1,12 +1,21 @@
 package com.unifor.processardor_consultas.parser;
 
+/**
+ * Representa um token extraído da consulta SQL pelo Tokenizer.
+ * Cada token tem um tipo (keyword, operador, identificador, etc.) e o valor original.
+ */
 public class Token {
 
     public enum Type {
-        // Keywords
-        SELECT, FROM, WHERE, JOIN, ON, AND, AS,
-        // Structural
-        IDENTIFIER, OPERATOR, COMMA, LPAREN, RPAREN, LITERAL
+        // Palavras-chave SQL suportadas
+        SELECT, FROM, WHERE, JOIN, ON, AND,
+        // Elementos estruturais
+        IDENTIFIER,  // nomes de tabela/coluna (ex: Cliente.nome)
+        OPERATOR,    // operadores de comparação (=, >, <, <=, >=, <>)
+        COMMA,       // separador de colunas no SELECT
+        LPAREN,      // parêntese de abertura
+        RPAREN,      // parêntese de fechamento
+        LITERAL      // valores numéricos ou strings entre aspas simples
     }
 
     private final Type type;
@@ -19,7 +28,6 @@ public class Token {
 
     public Type getType() { return type; }
     public String getValue() { return value; }
-    public String getValueLower() { return value.toLowerCase(); }
 
     @Override
     public String toString() { return type + "(" + value + ")"; }

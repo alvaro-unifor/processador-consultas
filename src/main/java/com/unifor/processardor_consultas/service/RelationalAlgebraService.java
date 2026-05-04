@@ -23,13 +23,13 @@ public class RelationalAlgebraService {
     public String convert(ParsedQuery query) {
 
         // 1. Build the "from" expression: base table with zero or more joins
-        String fromExpr = tableDisplay(query.getFromTable(), query.getFromAlias());
+        String fromExpr = query.getFromTable();
         for (JoinClause join : query.getJoins()) {
             fromExpr = fromExpr
                     + " ⋈_{"
                     + formatCondition(join.getCondition())
                     + "} "
-                    + tableDisplay(join.getTable(), join.getAlias());
+                    + join.getTable();
         }
 
         // 2. Wrap with σ if there are WHERE conditions
@@ -44,10 +44,6 @@ public class RelationalAlgebraService {
         // 3. Wrap with π (projeção obrigatória — * não é permitido)
         String projection = String.join(", ", query.getSelectColumns());
         return "π_{" + projection + "}(" + inner + ")";
-    }
-
-    private String tableDisplay(String table, String alias) {
-        return alias != null ? table + " " + alias : table;
     }
 
     private String formatCondition(Condition c) {

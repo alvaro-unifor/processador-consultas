@@ -6,13 +6,15 @@ import com.unifor.processardor_consultas.parser.ParsedQuery;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
- * Validates a ParsedQuery against the known schema.
- * Checks table existence and column existence for every reference in the query.
+ * ETAPA 3: Validação Semântica (Schema)
+ *
+ * Após o parsing sintático, verifica se as tabelas e colunas
+ * referenciadas na consulta existem no schema do banco de dados.
  */
 @Service
 public class SqlValidatorService {
@@ -26,78 +28,67 @@ public class SqlValidatorService {
     public List<String> validate(ParsedQuery query) {
         List<String> errors = new ArrayList<>();
 
-        // --- Build alias → real table name map ---
-        Map<String, String> aliasMap = new HashMap<>();
-        registerTable(aliasMap, errors, query.getFromTable(), query.getFromAlias());
+        // 1. Verifica se todas as tabelas existem no schema
+        Set<String> tables = new HashSet<>();
+        validateTable(query.getFromTable(), tables, errors);
         for (JoinClause join : query.getJoins()) {
-            registerTable(aliasMap, errors, join.getTable(), join.getAlias());
+            validateTable(join.getTable(), tables, errors);
         }
 
-        // --- Validate SELECT columns ---
+        // 2. Verifica colunas do SELECT
         for (String col : query.getSelectColumns()) {
-            validateColRef(col, aliasMap, errors);
+            validateColumn(col, tables, errors);
         }
 
-        // --- Validate JOIN ON conditions ---
+        // 3. Verifica colunas nas condições JOIN ON
         for (JoinClause join : query.getJoins()) {
-            validateColRef(join.getCondition().getLeft(), aliasMap, errors);
-            validateColRefOrLiteral(join.getCondition().getRight(), aliasMap, errors);
+            validateColumn(join.getCondition().getLeft(), tables, errors);
+            validateColumnOrLiteral(join.getCondition().getRight(), tables, errors);
         }
 
-        // --- Validate WHERE conditions ---
+        // 4. Verifica colunas nas condições WHERE
         for (Condition cond : query.getWhereConditions()) {
-            validateColRef(cond.getLeft(), aliasMap, errors);
-            validateColRefOrLiteral(cond.getRight(), aliasMap, errors);
+            validateColumn(cond.getLeft(), tables, errors);
+            validateColumnOrLiteral(cond.getRight(), tables, errors);
         }
 
         return errors;
     }
 
-    /**
-     * Registers a table (and its alias) in the alias map.
-     * Also validates that the table exists in the schema.
-     */
-    private void registerTable(Map<String, String> aliasMap, List<String> errors,
-                                String table, String alias) {
+    /** Verifica se a tabela existe e a registra no conjunto de tabelas da consulta. */
+    private void validateTable(String table, Set<String> tables, List<String> errors) {
         String tableLower = table.toLowerCase();
         if (!schema.tableExists(tableLower)) {
-            errors.add("Tabela '" + table + "' não existe no schema");
-            return;
+            errors.add("Tabela '" + table + "' não existe no schema.");
         }
-        // Map the alias (or the table name itself when there's no alias) → real table
-        String key = alias != null ? alias.toLowerCase() : tableLower;
-        aliasMap.put(key, tableLower);
-        // Always also map the real table name so queries without alias can use table.col
-        aliasMap.put(tableLower, tableLower);
+        tables.add(tableLower);
     }
 
-    private void validateColRef(String colRef, Map<String, String> aliasMap, List<String> errors) {
+    /** Verifica se uma referência Tabela.coluna é válida. */
+    private void validateColumn(String colRef, Set<String> tables, List<String> errors) {
         if (colRef.contains(".")) {
             String[] parts = colRef.split("\\.", 2);
-            String prefix = parts[0].toLowerCase();
-            String col = parts[1].toLowerCase();
-            String realTable = aliasMap.get(prefix);
-            if (realTable == null) {
-                errors.add("Tabela/alias '" + parts[0] + "' não reconhecido");
-            } else if (!schema.columnExists(realTable, col)) {
-                errors.add("Coluna '" + parts[1] + "' não existe na tabela '" + realTable + "'");
+            String tableName = parts[0].toLowerCase();
+            String columnName = parts[1].toLowerCase();
+            if (!tables.contains(tableName)) {
+                errors.add("Tabela '" + parts[0] + "' não está no FROM/JOIN da consulta.");
+            } else if (!schema.columnExists(tableName, columnName)) {
+                errors.add("Coluna '" + parts[1] + "' não existe na tabela '" + tableName + "'.");
             }
         } else {
-            // Unqualified column — check existence in any accessible table
+            // Coluna sem qualificação — procura em todas as tabelas da consulta
             String col = colRef.toLowerCase();
-            boolean found = aliasMap.values().stream()
-                    .distinct()
-                    .anyMatch(t -> schema.columnExists(t, col));
+            boolean found = tables.stream().anyMatch(t -> schema.columnExists(t, col));
             if (!found) {
-                errors.add("Coluna '" + colRef + "' não encontrada em nenhuma tabela acessível");
+                errors.add("Coluna '" + colRef + "' não encontrada em nenhuma tabela da consulta.");
             }
         }
     }
 
-    private void validateColRefOrLiteral(String value, Map<String, String> aliasMap,
-                                          List<String> errors) {
+    /** Se for literal (número ou string), não valida. Senão, valida como coluna. */
+    private void validateColumnOrLiteral(String value, Set<String> tables, List<String> errors) {
         if (isLiteral(value)) return;
-        validateColRef(value, aliasMap, errors);
+        validateColumn(value, tables, errors);
     }
 
     private boolean isLiteral(String value) {
